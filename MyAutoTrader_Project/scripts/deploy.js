@@ -36,7 +36,7 @@ async function main() {
   console.log(`export const MOCK_ORACLE_ADDRESS = "${oracle.target}";`);
   console.log(`export const CONTRACT_ADDRESS = "${trader.target}";`);
   console.log("============================================================");
-}
+} 
 
 main().catch((error) => {
   console.error(error);
