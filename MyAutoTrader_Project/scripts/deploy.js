@@ -27,14 +27,14 @@ async function main() {
   await trader.waitForDeployment();
 
   console.log("\n⚙️ Configuration de l'executor...");
-    await trader.setExecutor(deployer.address);
-    console.log("✅ Executor configuré:", deployer.address);
+  await trader.setExecutor(deployer.address);
+  console.log("✅ Executor configuré:", deployer.address);
   console.log("\n============================================================");
   console.log("📋 A COPIER DANS LE FRONTEND :");
   console.log("============================================================");
-console.log(`export const MOCK_USDC_ADDRESS = "${usdc.target}";`);
-console.log(`export const MOCK_ORACLE_ADDRESS = "${oracle.target}";`);
-console.log(`export const CONTRACT_ADDRESS = "${trader.target}";`);
+  console.log(`export const MOCK_USDC_ADDRESS = "${usdc.target}";`);
+  console.log(`export const MOCK_ORACLE_ADDRESS = "${oracle.target}";`);
+  console.log(`export const CONTRACT_ADDRESS = "${trader.target}";`);
   console.log("============================================================");
 }
 
