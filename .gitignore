@@ -1,38 +1,43 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ========================
+# Node / npm / pnpm
+# ========================
+node_modules/
+**/node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# ========================
+# Next.js (frontend)
+# ========================
+front/.next/
+front/out/
+front/.env*
+front/.vercel/
 
-# testing
-/coverage
+# ========================
+# Hardhat (smart contracts)
+# ========================
+MyAutoTrader_Project/artifacts/
+MyAutoTrader_Project/cache/
+MyAutoTrader_Project/typechain/
+MyAutoTrader_Project/.env*
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# ========================
+# Logs
+# ========================
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
 
-# local env files
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# ========================
+# OS / Editor
+# ========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
 
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
+# ========================
+# Optional (safe)
+# ========================
+coverage/
+dist/
+build/
