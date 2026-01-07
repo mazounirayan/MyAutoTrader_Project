@@ -77,14 +77,29 @@ export default function Home() {
     ethPrice ? Number(ethPrice) / 10 ** Number(ORACLE_DECIMALS) : 0;
 
   useEffect(() => {
+    // Chargement initial depuis le localStorage
+    const saved = localStorage.getItem("priceHistory");
+    if (saved) {
+      try {
+        setPriceHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Erreur lecture historique", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (currentPrice > 0) {
-      setPriceHistory((prev) => [
-        ...prev.slice(-19),
-        {
+      setPriceHistory((prev) => {
+        const newPoint = {
           time: new Date().toLocaleTimeString("fr-FR"),
           price: currentPrice
-        }
-      ]);
+        };
+        // On garde les 50 derniers points pour ne pas surcharger
+        const newHistory = [...prev.slice(-49), newPoint];
+        localStorage.setItem("priceHistory", JSON.stringify(newHistory));
+        return newHistory;
+      });
     }
   }, [currentPrice]);
 
@@ -178,18 +193,29 @@ export default function Home() {
     alert("Stratégie exécutée");
   };
 
-  const { isSuccess } = useWaitForTransactionReceipt({
+  const { isSuccess, data: receipt } = useWaitForTransactionReceipt({
     hash: txHash ?? undefined
   });
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && receipt) {
       setStep("IDLE");
       setTxHash(null);
       refetchBalance();
-      alert("Stratégie créée");
+
+      try {
+         const log = receipt.logs.find(l => l.address.toLowerCase() === CONTRACT_ADDRESS.toLowerCase());
+         if(log) {
+             const id = parseInt(log.topics[1] as string, 16); // Le topic 1 est l'index tokenId
+             alert(`✅ Stratégie #${id} créée avec succès !`);
+         } else {
+             alert("✅ Stratégie créée (ID introuvable)");
+         }
+      } catch(e) {
+          alert("✅ Stratégie créée");
+      }
     }
-  }, [isSuccess]);
+  }, [isSuccess, receipt]);
 
   if (!isClient) return null;
 
@@ -208,12 +234,41 @@ export default function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT */}
         <div className="space-y-4">
-          <button
-            onClick={handleMint}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-bold transition-all"
-          >
-            🚰 Faucet USDC
-          </button>
+          <div className="p-4 bg-blue-600/10 border border-blue-500/30 rounded-xl">
+            <p className="text-xs text-blue-400 uppercase font-bold mb-1">Mon Portefeuille</p>
+            <p className="text-2xl font-mono font-bold text-white">
+              {usdcBalance ? (Number(usdcBalance) / 10**6).toLocaleString() : "0"} <span className="text-sm">USDC</span>
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+             <button
+              onClick={async () => {
+                  if(!address) return alert("Connectez votre wallet d'abord !");
+                  setStep("GAS");
+                  try {
+                      const res = await fetch('/api/faucet', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ address })
+                      });
+                      const data = await res.json();
+                      if(data.success) alert(data.message);
+                      else alert("Erreur: " + data.message);
+                  } catch(e) { console.error(e); alert("Erreur appel API"); }
+                  setStep("IDLE");
+              }}
+              className="flex-1 py-2.5 bg-orange-600 hover:bg-orange-700 rounded-xl text-white font-bold transition-all text-sm"
+            >
+              ⛽ Gas (ETH)
+            </button>
+            <button
+                onClick={handleMint}
+                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-bold transition-all text-sm"
+            >
+                🚰 Faucet USDC
+            </button>
+          </div>
 
           <input
             value={amount}
@@ -300,6 +355,22 @@ export default function Home() {
             >
               EXECUTE
             </button>
+            
+            <div className="pt-4 mt-4 border-t border-white/10">
+                <button
+                onClick={async () => {
+                    try {
+                        const res = await fetch('/api/fund', { method: 'POST' });
+                        const data = await res.json();
+                        alert(data.message);
+                    } catch(e) { console.error(e); alert("Erreur API"); }
+                }}
+                className="w-full py-2 rounded-xl bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black transition-all font-bold text-xs uppercase"
+                >
+                🏦 Renflouer Contrat (Admin)
+                </button>
+                <p className="text-[10px] text-gray-500 text-center mt-1">À utiliser si le retrait échoue (manque de liquidité)</p>
+            </div>
           </div>
         </div>
       </div>

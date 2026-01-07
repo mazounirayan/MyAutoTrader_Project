@@ -25,6 +25,9 @@ export function StrategyCard({ tokenId }: { tokenId: bigint }) {
   const amount = Number(strategy.amountDeposited) / 1e6;
 
   const isProfit = strategy.isInvested && current > buy;
+  const pnlPercent = strategy.isInvested ? ((current - buy) / buy) * 100 : 0;
+  const pnlAmount = strategy.isInvested ? (amount * pnlPercent) / 100 : 0;
+
   const progressPercent = strategy.isInvested 
     ? Math.min(100, Math.max(0, ((current - buy) / (sell - buy)) * 100))
     : 0;
@@ -73,6 +76,11 @@ export function StrategyCard({ tokenId }: { tokenId: bigint }) {
         <div className="text-right">
             <span className="text-[10px] text-gray-500 uppercase tracking-wide">Investissement</span>
             <p className="font-bold text-white font-mono">{amount.toFixed(2)} USDC</p>
+            {strategy.isInvested && (
+                <p className={`text-xs font-bold ${isProfit ? 'text-green-400' : 'text-red-400'}`}>
+                    {isProfit ? '+' : ''}{pnlAmount.toFixed(2)} USDC ({pnlPercent.toFixed(1)}%)
+                </p>
+            )}
         </div>
       </div>
 
