@@ -34,13 +34,37 @@ export function StrategyCard({ tokenId }: { tokenId: bigint }) {
 
   // ACTIONS
   const handleDeactivate = async () => {
-    try { await writeContractAsync({ address: CONTRACT_ADDRESS, abi: TRADER_ABI, functionName: "deactivateStrategy", args: [tokenId] }); alert("✅ Stratégie désactivée !"); } 
-    catch (e) { console.error(e); alert("Erreur"); }
+    try { 
+      await writeContractAsync({ address: CONTRACT_ADDRESS, abi: TRADER_ABI, functionName: "deactivateStrategy", args: [tokenId] }); 
+      alert("✅ Stratégie désactivée !"); 
+    } 
+    catch (e: any) { 
+      if (e.shortMessage?.includes("User rejected")) return;
+      console.error(e); 
+      alert("Erreur lors de la désactivation : " + (e.shortMessage || "Vérifiez votre connexion")); 
+    }
   };
 
   const handleWithdraw = async () => {
-    try { await writeContractAsync({ address: CONTRACT_ADDRESS, abi: TRADER_ABI, functionName: "withdraw", args: [tokenId] }); alert("✅ Fonds retirés !"); } 
-    catch (e) { console.error(e); alert("Erreur"); }
+    try { 
+      await writeContractAsync({ 
+        address: CONTRACT_ADDRESS, 
+        abi: TRADER_ABI, 
+        functionName: "withdraw", 
+        args: [tokenId] 
+      }); 
+      alert("✅ Fonds retirés !"); 
+    } 
+    catch (e: any) { 
+      if (e.shortMessage?.includes("User rejected")) return;
+      console.error(e);
+      const errorMessage = e.message || "";
+      if (errorMessage.includes("Transfer failed")) {
+        alert("❌ Échec du retrait : Le contrat n'a pas assez de liquidités (USDC) pour payer vos gains simulés.\n\nVeuillez cliquer sur le bouton jaune 'Renflouer Contrat (Admin)' dans le panneau de droite pour remplir la caisse.");
+      } else {
+        alert("Erreur lors du retrait : " + (e.shortMessage || "Vérifiez votre solde de Gas (ETH)"));
+      }
+    }
   };
 
   const handleCopy = async () => {
@@ -51,7 +75,11 @@ export function StrategyCard({ tokenId }: { tokenId: bigint }) {
       await writeContractAsync({ address: MOCK_USDC_ADDRESS, abi: ERC20_ABI, functionName: "approve", args: [CONTRACT_ADDRESS, amountWei] });
       await writeContractAsync({ address: CONTRACT_ADDRESS, abi: TRADER_ABI, functionName: "copyStrategy", args: [tokenId, amountWei] });
       alert("✅ Stratégie copiée !");
-    } catch (e) { console.error(e); alert("Erreur"); }
+    } catch (e: any) { 
+      if (e.shortMessage?.includes("User rejected")) return;
+      console.error(e); 
+      alert("Erreur lors de la copie : " + (e.shortMessage || "Avez-vous assez d'USDC ?")); 
+    }
   };
 
   return (

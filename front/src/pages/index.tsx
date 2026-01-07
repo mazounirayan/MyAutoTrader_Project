@@ -118,6 +118,9 @@ export default function Home() {
       });
       refetchBalance();
       alert(" 1000 USDC reçus ");
+    } catch (e: any) {
+        if (e.shortMessage?.includes("User rejected")) return;
+        alert("Erreur Faucet: " + (e.shortMessage || "Erreur inconnue"));
     } finally {
       setStep("IDLE");
     }
@@ -155,16 +158,20 @@ export default function Home() {
       });
 
       setTxHash(hash);
-    } catch (e) {
+    } catch (e: any) {
+      if (e.shortMessage?.includes("User rejected")) {
+          setStep("IDLE");
+          return;
+      }
       console.error(e);
       setStep("IDLE");
+      alert("Erreur Création: " + (e.shortMessage || "Vérifiez vos paramètres"));
     }
   };
 
   // Oracle update (simulation)
   const handleUpdatePrice = async () => {
     try {
-
         await writeContractAsync({
         address: MOCK_ORACLE_ADDRESS,
         abi: ORACLE_ABI,
@@ -173,7 +180,8 @@ export default function Home() {
         });
 
         alert("Oracle mis à jour (simulation)");
-    }catch (e) {
+    }catch (e: any) {
+        if (e.shortMessage?.includes("User rejected")) return;
         console.error(e);
         alert("Revert oracle");
     }
@@ -183,14 +191,18 @@ export default function Home() {
   const handleExecute = async () => {
     if (!strategyToExec) return;
 
-    await writeContractAsync({
-      address: CONTRACT_ADDRESS,
-      abi: TRADER_ABI,
-      functionName: "executeStrategy",
-      args: [BigInt(strategyToExec)]
-    });
-
-    alert("Stratégie exécutée");
+    try {
+        await writeContractAsync({
+          address: CONTRACT_ADDRESS,
+          abi: TRADER_ABI,
+          functionName: "executeStrategy",
+          args: [BigInt(strategyToExec)]
+        });
+        alert("Stratégie exécutée");
+    } catch(e: any) {
+        if (e.shortMessage?.includes("User rejected")) return;
+        alert("Erreur exécution : " + (e.shortMessage || "Vérifiez l'ID"));
+    }
   };
 
   const { isSuccess, data: receipt } = useWaitForTransactionReceipt({
