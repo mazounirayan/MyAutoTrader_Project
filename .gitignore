@@ -15,10 +15,10 @@ front/.vercel/
 # ========================
 # Hardhat (smart contracts)
 # ========================
-MyAutoTrader_Project/artifacts/
-MyAutoTrader_Project/cache/
-MyAutoTrader_Project/typechain/
-MyAutoTrader_Project/.env*
+back/artifacts/
+back/cache/
+back/typechain/
+back/.env*
 
 # ========================
 # Logs

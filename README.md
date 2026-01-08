@@ -5,30 +5,27 @@ Trading automatisé sur blockchain avec NFT
 ## 🚀 Installation
 ```bash
 # Backend (Hardhat)
-npm install
+cd back && npm install
 
 # Frontend (Next.js)
-cd front
-npm install
+cd front && npm install
 ```
 
 ## 📦 Déploiement Local
 ```bash
 # Terminal 1 : Lancer la blockchain locale
-npx hardhat node
+cd back && npx hardhat node
 
 # Terminal 2 : Déployer les contrats
-npm hardhat clean
-npm hardhat compile
+cd back && npx hardhat clean && npx hardhat compile
 npx hardhat run scripts/deploy.js --network localhost
 
 ##  connection front back
-maitre les constent generer pas 
-npx hardhat run scripts/deploy.js --network localhost
-dans front constants.js
+# => mettre les constant generer par 
+# => npx hardhat run scripts/deploy.js --network localhost
+# => dans front constants.js
 # Terminal 3 : Lancer le frontend
-cd frontend
-npm run dev
+cd front && npm run dev
 ```
 
 ## 🎯 Utilisation

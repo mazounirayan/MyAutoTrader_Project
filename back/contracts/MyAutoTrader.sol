@@ -217,14 +217,21 @@ contract MyAutoTrader is ERC721, Ownable {
 
     function _executeSell(uint256 tokenId, uint256 price) internal {
         Strategy storage strategy = strategies[tokenId];
+        require(strategy.entryPrice > 0, "Invalid entry price");
+
         uint256 initialValue = strategy.amountDeposited;
+        uint256 finalValue = (initialValue * price) / strategy.entryPrice;
         uint256 fee = 0;
 
-        if (price > strategy.buyPrice) {
-            uint256 profit = (initialValue * 10) / 100; // +10% simulation
+        // Si profit
+        if (finalValue > initialValue) {
+            uint256 profit = finalValue - initialValue;
             fee = (profit * PERFORMANCE_FEE) / 10000;
-            strategy.amountDeposited = initialValue + profit - fee;
+            strategy.amountDeposited = finalValue - fee;
             emit FeeCollected(tokenId, fee, ownerOf(tokenId));
+        } else {
+            // Si perte
+            strategy.amountDeposited = finalValue;
         }
 
         strategy.exitPrice = price;

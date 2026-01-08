@@ -1,10 +1,9 @@
-import { ethers } from "ethers";
+const { ethers } = require("ethers");
 require("dotenv").config();
 
-
-export const MOCK_USDC_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-export const CONTRACT_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
-export const TRADER_ABI = [
+const MOCK_USDC_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const CONTRACT_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+const TRADER_ABI = [
   {
     "inputs": [],
     "name": "getLatestPrice",
@@ -45,81 +44,52 @@ export const TRADER_ABI = [
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
-  }
-];
-
-// ABI ERC20 (Standard)
-export const ERC20_ABI = [
-  {
-    "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
-    "name": "balanceOf",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
-    ],
-    "name": "mint",
+    "inputs": [],
+    "name": "executeAllStrategies",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "spender", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
-    ],
-    "name": "approve",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-  name: "getStrategy",
-  type: "function",
-  stateMutability: "view",
-  inputs: [{ name: "tokenId", type: "uint256" }],
-  outputs: [{
-    type: "tuple",
-    components: [
-      { name: "id", type: "uint256" },
-      { name: "amountDeposited", type: "uint256" },
-      { name: "buyPrice", type: "uint256" },
-      { name: "sellPrice", type: "uint256" },
-      { name: "stopLossPrice", type: "uint256" },
-      { name: "isInvested", type: "bool" },
-      { name: "isActive", type: "bool" }
-    ]
-  }]
-},
-{
-  name: "getMyStrategies",
-  type: "function",
-  stateMutability: "view",
-  inputs: [{ name: "owner", type: "address" }],
-  outputs: [{ name: "", type: "uint256[]" }]
-}
+  }
 ];
-const provider = new ethers.JsonRpcProvider(process.env.ALCHEMY_MUMBAI_URL);
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+
+// Configuration pour le réseau local Hardhat
+const LOCAL_RPC_URL = "http://127.0.0.1:8545";
+// Clé privée par défaut de l'Account #0 de Hardhat
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+
+const provider = new ethers.JsonRpcProvider(LOCAL_RPC_URL);
+const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 const contract = new ethers.Contract(CONTRACT_ADDRESS, TRADER_ABI, wallet);
 
 async function checkAndExecute() {
-    console.log("🔍 Vérification des stratégies...");
+    const now = new Date().toLocaleTimeString();
+    console.log(`[${now}] 🔍 Vérification des stratégies...`);
     
     try {
+        // On vérifie d'abord s'il y a des stratégies à exécuter
+        const nextId = await contract.nextTokenId();
+        if (nextId == 0) {
+            console.log("   Wait : Aucune stratégie sur le contrat.");
+            return;
+        }
+
         const tx = await contract.executeAllStrategies();
-        console.log("✅ Transaction envoyée:", tx.hash);
+        console.log("   ✅ Transaction d'exécution envoyée:", tx.hash);
         await tx.wait();
-        console.log("✅ Exécution terminée");
+        console.log("   ✅ Exécution terminée avec succès");
     } catch (error) {
-        console.log("⏭️ Aucune action nécessaire");
+        // Souvent l'erreur signifie juste qu'aucune condition n'est remplie (revert volontaire)
+        console.log("   ⏭️  Rien à faire (Conditions non remplies ou erreur)");
     }
 }
 
-// Exécuter toutes les 30 secondes
-setInterval(checkAndExecute, 30000);
-console.log("🤖 Bot de monitoring lancé");
+// Exécuter immédiatement au lancement
+checkAndExecute();
+
+// Puis toutes les 10 secondes (plus rapide pour la démo)
+setInterval(checkAndExecute, 10000);
+
+console.log("🤖 Bot de monitoring lancé sur Localhost (8545)");
+console.log("   Utilise l'adresse de l'exécuteur :", wallet.address);
